@@ -1,0 +1,10 @@
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "geometry-engine-3d"
+version = "0.1.0"
+description = "Mathematical modeling and numerical analysis in 3D geometry"
+requires-python = ">=3.12"
+
+[tool.setuptools.packages.find]
+where = ["src"]
