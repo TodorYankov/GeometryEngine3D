@@ -16,3 +16,12 @@ class Point3D:
         dz = other.z - self.z
 
         return sqrt(dx**2 + dy**2 + dz**2)
+
+    def __repr__(self) -> str:
+        return (
+            f"Point3D(x={self.x}, "
+            f"y={self.y}, "
+            f"z={self.z})"
+        )
+
+
