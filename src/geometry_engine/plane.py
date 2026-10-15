@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-
+from geometry_engine.line import Line3D
 from geometry_engine.point import Point3D
 from geometry_engine.vector import Vector3D
 
@@ -36,3 +36,27 @@ class Plane3D:
         )
 
         return abs(self.normal.dot(displacement)) / self.normal.magnitude()
+
+    def intersect_line(self, line: Line3D) -> Point3D | None:
+        denominator = self.normal.dot(line.direction)
+
+        displacement = Vector3D(
+            self.point.x - line.point.x,
+            self.point.y - line.point.y,
+            self.point.z - line.point.z
+        )
+
+        numerator = self.normal.dot(displacement)
+
+        if abs(denominator) < 1e-12:
+            if abs(numerator) < 1e-12:
+                raise ValueError(
+                    "The line lies entirely in the plane; "
+                    "there are infinitely many intersection points."
+                )
+
+            return None
+
+        t = numerator / denominator
+
+        return line.point_at(t)

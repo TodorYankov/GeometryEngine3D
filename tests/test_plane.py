@@ -1,5 +1,5 @@
 import pytest
-
+from geometry_engine.line import Line3D
 from geometry_engine.point import Point3D
 from geometry_engine.vector import Vector3D
 from geometry_engine.plane import Plane3D
@@ -64,3 +64,53 @@ def test_distance_with_non_unit_normal():
     )
 
     assert plane.distance_to_point(Point3D(3, 4, 5)) == pytest.approx(5.0)
+
+def test_line_plane_intersection():
+    line = Line3D(
+        Point3D(1, 2, 5),
+        Vector3D(0, 0, -1)
+    )
+
+    plane = Plane3D(
+        Point3D(0, 0, 0),
+        Vector3D(0, 0, 1)
+    )
+
+    intersection = plane.intersect_line(line)
+
+    assert intersection is not None
+    assert intersection.x == pytest.approx(1)
+    assert intersection.y == pytest.approx(2)
+    assert intersection.z == pytest.approx(0)
+
+
+def test_parallel_line_no_intersection():
+    line = Line3D(
+        Point3D(1, 2, 5),
+        Vector3D(1, 0, 0)
+    )
+
+    plane = Plane3D(
+        Point3D(0, 0, 0),
+        Vector3D(0, 0, 1)
+    )
+
+    assert plane.intersect_line(line) is None
+
+
+def test_line_contained_in_plane():
+    line = Line3D(
+        Point3D(1, 2, 0),
+        Vector3D(1, 0, 0)
+    )
+
+    plane = Plane3D(
+        Point3D(0, 0, 0),
+        Vector3D(0, 0, 1)
+    )
+
+    with pytest.raises(
+        ValueError,
+        match="infinitely many intersection points"
+    ):
+        plane.intersect_line(line)
