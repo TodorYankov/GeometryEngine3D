@@ -305,7 +305,21 @@ The analysis also shows that equal parameter intervals do not necessarily produc
 
 The project combines mathematical modeling, programming, automated testing, and numerical experiments.
 
-## 9. Author
+## 9. Future Development and Research Perspectives
+
+GeometryEngine3D provides a mathematical foundation for modeling geometric objects and trajectories in three-dimensional space.
+
+In the future, the project could be extended to explore more complex spatial and periodic processes, including orbital motion, celestial mechanics, and mathematical patterns in natural phenomena.
+
+Such developments could offer opportunities to investigate the mathematical harmony observed in the universe.
+
+From a broader philosophical perspective, this raises an interesting question:
+
+**Is mathematics merely a tool for describing the universe, or does it reflect fundamental patterns embedded in the structure of reality itself?**
+
+This question may inspire future research based on mathematical modeling, scientific observation, and testable hypotheses.
+
+## 10. Author
 
 **Todor Yankov**
 
