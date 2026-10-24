@@ -45,3 +45,35 @@ class Box3D:
             and self.min_point.y <= point.y <= self.max_point.y
             and self.min_point.z <= point.z <= self.max_point.z
         )
+
+    def intersects_segment(self, start: Point3D, end: Point3D) -> bool:
+        """Check whether a segment intersects or touches the box."""
+        t_min = 0.0
+        t_max = 1.0
+
+        for axis in ("x", "y", "z"):
+            start_value = getattr(start, axis)
+            end_value = getattr(end, axis)
+            direction = end_value - start_value
+
+            lower = getattr(self.min_point, axis)
+            upper = getattr(self.max_point, axis)
+
+            if direction == 0:
+                if start_value < lower or start_value > upper:
+                    return False
+                continue
+
+            t1 = (lower - start_value) / direction
+            t2 = (upper - start_value) / direction
+
+            t_enter = min(t1, t2)
+            t_exit = max(t1, t2)
+
+            t_min = max(t_min, t_enter)
+            t_max = min(t_max, t_exit)
+
+            if t_min > t_max:
+                return False
+
+        return True
