@@ -77,3 +77,40 @@ class Box3D:
                 return False
 
         return True
+
+    def first_contact(
+            self, start: Point3D, end: Point3D
+    ) -> Point3D | None:
+        """Return the first contact point, or None if there is no contact."""
+        t_min = 0.0
+        t_max = 1.0
+
+        for axis in ("x", "y", "z"):
+            start_value = getattr(start, axis)
+            direction = getattr(end, axis) - start_value
+
+            lower = getattr(self.min_point, axis)
+            upper = getattr(self.max_point, axis)
+
+            if direction == 0:
+                if start_value < lower or start_value > upper:
+                    return None
+                continue
+
+            t1 = (lower - start_value) / direction
+            t2 = (upper - start_value) / direction
+
+            t_enter = min(t1, t2)
+            t_exit = max(t1, t2)
+
+            t_min = max(t_min, t_enter)
+            t_max = min(t_max, t_exit)
+
+            if t_min > t_max:
+                return None
+
+        return Point3D(
+            start.x + t_min * (end.x - start.x),
+            start.y + t_min * (end.y - start.y),
+            start.z + t_min * (end.z - start.z),
+        )

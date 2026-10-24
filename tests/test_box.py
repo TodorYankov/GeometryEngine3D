@@ -113,3 +113,90 @@ def test_zero_length_segment():
         Point3D(0, 0, 0),
         Point3D(0, 0, 0),
     )
+
+def test_first_contact_through_box():
+    box = Box3D(Point3D(3, 3, 2), Point3D(7, 7, 8))
+
+    contact = box.first_contact(
+        Point3D(0, 5, 5),
+        Point3D(10, 5, 5),
+    )
+
+    assert contact is not None
+    assert contact.x == pytest.approx(3)
+    assert contact.y == pytest.approx(5)
+    assert contact.z == pytest.approx(5)
+
+
+def test_first_contact_no_intersection():
+    box = Box3D(Point3D(3, 3, 2), Point3D(7, 7, 8))
+
+    contact = box.first_contact(
+        Point3D(0, 0, 0),
+        Point3D(10, 0, 0),
+    )
+
+    assert contact is None
+
+
+def test_first_contact_on_face():
+    box = Box3D(Point3D(3, 3, 2), Point3D(7, 7, 8))
+
+    contact = box.first_contact(
+        Point3D(0, 5, 5),
+        Point3D(3, 5, 5),
+    )
+
+    assert contact is not None
+    assert contact.x == pytest.approx(3)
+    assert contact.y == pytest.approx(5)
+    assert contact.z == pytest.approx(5)
+
+
+def test_first_contact_at_vertex():
+    box = Box3D(Point3D(3, 3, 2), Point3D(7, 7, 8))
+
+    contact = box.first_contact(
+        Point3D(0, 0, -1),
+        Point3D(3, 3, 2),
+    )
+
+    assert contact is not None
+    assert (contact.x, contact.y, contact.z) == pytest.approx(
+        (3, 3, 2)
+    )
+
+
+def test_first_contact_start_inside():
+    box = Box3D(Point3D(3, 3, 2), Point3D(7, 7, 8))
+
+    start = Point3D(5, 5, 5)
+
+    contact = box.first_contact(
+        start,
+        Point3D(10, 5, 5),
+    )
+
+    assert contact is not None
+    assert (contact.x, contact.y, contact.z) == pytest.approx(
+        (5, 5, 5)
+    )
+
+
+def test_first_contact_zero_length_segment():
+    box = Box3D(Point3D(3, 3, 2), Point3D(7, 7, 8))
+
+    contact = box.first_contact(
+        Point3D(5, 5, 5),
+        Point3D(5, 5, 5),
+    )
+
+    assert contact is not None
+    assert (contact.x, contact.y, contact.z) == pytest.approx(
+        (5, 5, 5)
+    )
+
+    assert box.first_contact(
+        Point3D(0, 0, 0),
+        Point3D(0, 0, 0),
+    ) is None
