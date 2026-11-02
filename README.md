@@ -135,7 +135,7 @@ $$
 For a segment $P(t)=A+t(B-A)$, $0\leq t\leq1$, the closest point to the sphere center is found using the clamped projection parameter:
 
 $$
-t^*=\operatorname{clip}_{[0,1]}\left(\frac{(C-A)\cdot(B-A)}{\|B-A\|^2}\right)
+t^*=\max\left(0,\min\left(1,\frac{(C-A)\cdot(B-A)}{\|B-A\|^2}\right)\right)
 $$
 
 A collision (including boundary contact) occurs when $\|P(t^*)-C\|\leq r+c$, where $c\geq0$ is the safety clearance. Zero-length segments are handled separately.
