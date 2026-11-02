@@ -6,11 +6,11 @@ GeometryEngine3D is a Python project for mathematical modeling, trajectory plann
 
 The project's practical goal is to calculate a path between two points, detect whether it intersects a solid obstacle, and generate and visualize an alternative collision-free route. It combines Euclidean geometry, vector algebra, analytic geometry, numerical experiments, automated tests, and Jupyter Notebook visualizations.
 
-The current motion-planning demonstration models a moving **point** and one **axis-aligned rectangular solid**. It is a geometric simulation, not a physical vehicle controller.
+The motion-planning demonstrations model a moving **point** and one obstacle at a time: either an **axis-aligned rectangular solid (Box3D)** or a **sphere (Sphere3D)**. These are geometric simulations, not physical vehicle controllers.
 
 ## 1. Project Objectives
 
-- Represent points, vectors, lines, triangles, planes, and rectangular solids in 3D.
+- Represent points, vectors, lines, triangles, planes, rectangular solids, and spheres in 3D.
 - Perform geometric calculations and transformations.
 - Construct linear and multipoint trajectories using parametric equations.
 - Detect intersections and first contact points between trajectories and solid obstacles.
@@ -124,7 +124,23 @@ $$
 
 A path is considered colliding if any of its segments intersects or touches the obstacle.
 
-### 2.11 Automatic Path Planning
+### 2.11 Sphere3D and Spherical Collision Detection
+
+`Sphere3D` represents a sphere with center $C=(c_x,c_y,c_z)$ and radius $r>0$. A point $P$ lies inside or on the sphere when:
+
+$$
+\|P-C\|^2\leq r^2
+$$
+
+For a segment $P(t)=A+t(B-A)$, $0\leq t\leq1$, the closest point to the sphere center is found using the clamped projection parameter:
+
+$$
+t^*=\operatorname{clip}_{[0,1]}\left(\frac{(C-A)\cdot(B-A)}{\|B-A\|^2}\right)
+$$
+
+A collision (including boundary contact) occurs when $\|P(t^*)-C\|\leq r+c$, where $c\geq0$ is the safety clearance. Zero-length segments are handled separately.
+
+### 2.12 Automatic Path Planning
 
 `plan_path()` attempts to find a route around one rectangular obstacle:
 
@@ -135,6 +151,12 @@ A path is considered colliding if any of its segments intersects or touches the 
 5. Select the shortest among the remaining candidates.
 
 **Limitation:** This is a candidate-based planner for one axis-aligned box. It does **not** guarantee a globally shortest route, and it may fail to find a path even if another valid route exists.
+
+### 2.13 Spherical Obstacle Avoidance
+
+`plan_path_around_sphere()` first tests whether the direct segment is clear. If blocked, it samples lateral bypass directions in a plane perpendicular to the start-to-end direction, constructs four-point candidate routes, rejects those intersecting the **inflated sphere** (radius $R=r+c$), and selects the shortest valid candidate. The planner requires start and end points outside the inflated sphere.
+
+This is a **sampling-based heuristic for one sphere**, not a complete or globally optimal motion planner. Failure to find a candidate does not prove that no collision-free route exists.
 
 ## 3. Project Structure
 
@@ -159,7 +181,9 @@ GeometryEngine3D/
 │       ├── multipoint_path.py
 │       ├── box.py
 │       ├── collision.py
-│       └── path_planner.py
+│       ├── path_planner.py
+│       ├── sphere.py
+│       └── sphere_path_planner.py
 ├── tests/
 │   ├── test_point.py
 │   ├── test_vector.py
@@ -171,7 +195,9 @@ GeometryEngine3D/
 │   ├── test_multipoint_path.py
 │   ├── test_box.py
 │   ├── test_collision.py
-│   └── test_path_planner.py
+│   ├── test_path_planner.py
+│   ├── test_sphere.py
+│   └── test_sphere_path_planner.py
 ├── .gitignore
 ├── pyproject.toml
 ├── requirements.txt
@@ -185,7 +211,7 @@ GeometryEngine3D/
 | [01 — Points and Vectors](notebooks/01_points_and_vectors.ipynb) | Points, vectors, and Euclidean geometry |
 | [02 — Lines and Triangles](notebooks/02_lines_and_triangles.ipynb) | Lines, triangles, and geometric calculations |
 | [03 — Planes and Transformations](notebooks/03_planes_and_transformations.ipynb) | Planes and geometric transformations |
-| [04 — Trajectory Planning](notebooks/04_trajectory_planning.ipynb) | Multipoint paths, collision detection, automatic obstacle avoidance, 3D visualization, and animation |
+| [04 — Trajectory Planning](notebooks/04_trajectory_planning.ipynb) | Multipoint paths, box and sphere collision detection, obstacle avoidance, Monte Carlo experiments, 3D visualization, and animation |
 
 ## 5. Multipoint Trajectory Experiment
 
@@ -287,9 +313,27 @@ The animation samples the planned path at equal distance intervals and shows a p
 
 See [Notebook 04 — Trajectory Planning](notebooks/04_trajectory_planning.ipynb) for the calculations, plots, and animation code.
 
-## 9. Automated Testing
+## 9. Spherical Obstacle Avoidance Experiment
 
-The project uses `pytest` to verify geometric operations, path interpolation, solid geometry, segment-box intersections, contact detection, multipoint collision checks, and automatic path planning.
+The notebook studies a sphere centered at $C=(5,5,5)$ with radius $r=2$ and safety clearance $c=1$, between $A=(0,5,5)$ and $B=(10,5,5)$. The effective collision radius is $R=3$.
+
+| Metric | Result |
+|---|---:|
+| Direct path length | 10.000 |
+| Selected collision-free candidate length | 16.300 |
+| Additional distance | 6.300 (63.0%) |
+| Path points | 4 |
+| Segment collision check with clearance | No collision |
+
+The 3D plot shows the physical sphere, a transparent orange safety boundary, the intersecting direct segment, and the verified bypass. The chosen candidate is not claimed to be the globally shortest route.
+
+### 9.1 Monte Carlo Experiment (Box3D)
+
+The notebook also evaluates the box planner using **1,000 randomly generated axis-aligned box obstacles** under the documented sampling setup. In that experiment, **386** direct routes were blocked; the planner produced verified detours for all **386** blocked cases. This is an empirical result for the chosen obstacle distribution, **not** a general success-rate guarantee for arbitrary environments or multiple obstacles.
+
+## 10. Automated Testing
+
+The project uses `pytest` to verify geometric operations, path interpolation, solid geometry, segment-box and segment-sphere intersections, contact detection, multipoint collision checks, and box/sphere path planning.
 
 Run from the project root:
 
@@ -297,13 +341,13 @@ Run from the project root:
 python -m pytest -q
 ```
 
-Latest locally verified result (24 October 2026):
+Latest locally verified result (2 November 2026):
 
 ```text
-78 passed in 0.17s
+89 passed in 0.19s
 ```
 
-## 10. Installation and Usage
+## 11. Installation and Usage
 
 Python 3.12 or newer is required.
 
@@ -332,7 +376,7 @@ For notebooks, plotting, and GIF export:
 python -m pip install jupyter matplotlib numpy pillow
 ```
 
-### 10.1 Multipoint Trajectory Example
+### 11.1 Multipoint Trajectory Example
 
 ```python
 from geometry_engine.point import Point3D
@@ -352,7 +396,7 @@ print(position)
 
 Expected coordinates: `(6.0, 4.0, 0.0)`.
 
-### 10.2 Automatic Obstacle Avoidance Example
+### 11.2 Automatic Obstacle Avoidance Example
 
 ```python
 from geometry_engine.point import Point3D
@@ -378,7 +422,7 @@ Expected final line:
 Collision detected: False
 ```
 
-## 11. Methodology
+## 12. Methodology
 
 1. Define a geometric problem and its assumptions.
 2. Express the problem using mathematical models.
@@ -388,11 +432,11 @@ Collision detected: False
 6. Visualize experiments in Jupyter Notebooks.
 7. Analyze results, trade-offs, and limitations.
 
-The main experiment investigates whether a piecewise linear route can be generated to connect two points without intersecting a rectangular solid.
+The experiments investigate whether piecewise linear routes can connect two points without intersecting a rectangular solid or a sphere, and how safety clearance changes the resulting path.
 
-## 12. Limitations
+## 13. Limitations
 
-- Obstacles are axis-aligned rectangular solids.
+- Implemented obstacles are axis-aligned rectangular solids and spheres; each planner supports its own obstacle type.
 - The planner handles one obstacle at a time.
 - Generated routes consist of straight segments.
 - The planner does not guarantee globally optimal routes or completeness.
@@ -400,13 +444,13 @@ The main experiment investigates whether a piecewise linear route can be generat
 - Forces, acceleration, turning constraints, and vehicle dynamics are not modeled.
 - The current simulation does not model transitions between air, water, and other physical media.
 
-## 13. Conclusions
+## 14. Conclusions
 
-GeometryEngine3D demonstrates how three-dimensional geometry can support a practical motion-planning task. In the worked example, a direct path of length 10 intersects a solid obstacle, while an automatically generated path of length 16 avoids it. The calculation is verified by collision tests and illustrated through 3D visualization and animation.
+GeometryEngine3D demonstrates how three-dimensional geometry can support a practical motion-planning task. In the box example, a direct path of length 10 intersects the obstacle while a planned path of length 16 avoids it. In the sphere example, the selected collision-free candidate has length 16.300 compared with a direct length of 10. Both examples are checked for collisions and visualized in 3D. The Monte Carlo box experiment provides additional empirical validation under a specific randomized setup.
 
-The project connects mathematical definitions with implemented algorithms, automated verification, and a concrete experimental result.
+The project connects mathematical definitions with implemented algorithms, automated verification, and reproducible experiments. Its planners are heuristic and their limitations are explicitly documented.
 
-## 14. References
+## 15. References
 
 1. **Weisstein, Eric W.**  
    *MathWorld — A Wolfram Web Resource.*  
@@ -441,7 +485,8 @@ The project connects mathematical definitions with implemented algorithms, autom
 7. **pytest Development Team.**  
    *pytest Documentation.*  
    https://docs.pytest.org/
-## 15. Author
+
+## 16. Author
 
 **Todor Yankov**
 
