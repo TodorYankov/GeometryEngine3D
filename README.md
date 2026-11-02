@@ -140,7 +140,50 @@ $$
 
 A collision (including boundary contact) occurs when $\|P(t^*)-C\|\leq r+c$, where $c\geq0$ is the safety clearance. Zero-length segments are handled separately.
 
-### 2.12 Automatic Path Planning
+### 2.12 Pyramid3D — Square Pyramid Geometry and Collision Detection
+
+`Pyramid3D` represents a right square pyramid with a horizontal base.
+
+The pyramid is defined by:
+- Base center coordinates `(center_x, center_y)`
+- Base elevation `base_z`
+- Square base side length `a > 0`
+- Height `h > 0`
+
+**Volume:**
+
+$$
+V = \frac{a^2h}{3}
+$$
+
+**Total surface area:**
+
+$$
+S = a^2 + 2a\sqrt{h^2 + \frac{a^2}{4}}
+$$
+
+At elevation `z` above the base, the horizontal half-width is:
+
+$$
+w(z) = \frac{a}{2}\left(1-\frac{z}{h}\right)
+$$
+
+The implementation provides:
+
+- `volume` and `surface_area`
+- `apex`
+- `contains_point()` for point containment
+- `intersects_segment()` for collision detection
+
+Segment intersection uses clipping against five half-spaces
+representing the pyramid's base and four side faces.
+
+Boundary contact counts as a collision.
+
+**Limitations:** The pyramid currently supports collision detection
+with `clearance=0`. Automatic path planning around pyramids
+has not yet been implemented.
+### 2.13 Automatic Path Planning
 
 `plan_path()` attempts to find a route around one rectangular obstacle:
 
@@ -152,7 +195,7 @@ A collision (including boundary contact) occurs when $\|P(t^*)-C\|\leq r+c$, whe
 
 **Limitation:** This is a candidate-based planner for one axis-aligned box. It does **not** guarantee a globally shortest route, and it may fail to find a path even if another valid route exists.
 
-### 2.13 Spherical Obstacle Avoidance
+### 2.14 Spherical Obstacle Avoidance
 
 `plan_path_around_sphere()` first tests whether the direct segment is clear. If blocked, it samples lateral bypass directions in a plane perpendicular to the start-to-end direction, constructs four-point candidate routes, rejects those intersecting the **inflated sphere** (radius $R=r+c$), and selects the shortest valid candidate. The planner requires start and end points outside the inflated sphere.
 
