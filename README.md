@@ -6,11 +6,11 @@ GeometryEngine3D is a Python project for mathematical modeling, trajectory plann
 
 The project's practical goal is to calculate a path between two points, detect whether it intersects a solid obstacle, and generate and visualize an alternative collision-free route. It combines Euclidean geometry, vector algebra, analytic geometry, numerical experiments, automated tests, and Jupyter Notebook visualizations.
 
-The motion-planning demonstrations model a moving **point** and one obstacle at a time: either an **axis-aligned rectangular solid (Box3D)** or a **sphere (Sphere3D)**. These are geometric simulations, not physical vehicle controllers.
+The motion-planning demonstrations model a moving **point** and one obstacle at a time: either an **axis-aligned rectangular solid (Box3D)** or a **sphere (Sphere3D)**. Additional collision-detection experiments cover a **square pyramid (Pyramid3D)** and a **composite obstacle (CompositeObstacle3D)**. These are geometric simulations, not physical vehicle controllers.
 
 ## 1. Project Objectives
 
-- Represent points, vectors, lines, triangles, planes, rectangular solids, and spheres in 3D.
+- Represent points, vectors, lines, triangles, planes, rectangular solids, spheres, and square pyramids in 3D.
 - Perform geometric calculations and transformations.
 - Construct linear and multipoint trajectories using parametric equations.
 - Detect intersections and first contact points between trajectories and solid obstacles.
@@ -183,7 +183,25 @@ Boundary contact counts as a collision.
 **Limitations:** The pyramid currently supports collision detection
 with `clearance=0`. Automatic path planning around pyramids
 has not yet been implemented.
-### 2.13 Automatic Path Planning
+
+### 2.13 CompositeObstacle3D — Multiple Obstacle Collision Detection
+
+`CompositeObstacle3D` represents the geometric union of multiple
+3D obstacles, including boxes, spheres, and square pyramids.
+
+Features:
+- Point containment across multiple obstacles
+- Line segment collision detection
+- Support for heterogeneous geometric objects
+- 3D visualization in Notebook 04
+- Explicit validation of unsupported safety clearance
+
+The current implementation supports `clearance=0`.
+Automatic path planning around composite obstacles is not yet implemented.
+
+The complete project passes 118 automated tests.
+
+### 2.14 Automatic Path Planning
 
 `plan_path()` attempts to find a route around one rectangular obstacle:
 
@@ -195,7 +213,7 @@ has not yet been implemented.
 
 **Limitation:** This is a candidate-based planner for one axis-aligned box. It does **not** guarantee a globally shortest route, and it may fail to find a path even if another valid route exists.
 
-### 2.14 Spherical Obstacle Avoidance
+### 2.15 Spherical Obstacle Avoidance
 
 `plan_path_around_sphere()` first tests whether the direct segment is clear. If blocked, it samples lateral bypass directions in a plane perpendicular to the start-to-end direction, constructs four-point candidate routes, rejects those intersecting the **inflated sphere** (radius $R=r+c$), and selects the shortest valid candidate. The planner requires start and end points outside the inflated sphere.
 
@@ -226,7 +244,9 @@ GeometryEngine3D/
 │       ├── collision.py
 │       ├── path_planner.py
 │       ├── sphere.py
-│       └── sphere_path_planner.py
+│       ├── sphere_path_planner.py
+│       ├── pyramid.py
+│       └── composite_obstacle.py
 ├── tests/
 │   ├── test_point.py
 │   ├── test_vector.py
@@ -240,7 +260,9 @@ GeometryEngine3D/
 │   ├── test_collision.py
 │   ├── test_path_planner.py
 │   ├── test_sphere.py
-│   └── test_sphere_path_planner.py
+│   ├── test_sphere_path_planner.py
+│   ├── test_pyramid.py
+│   └── test_composite_obstacle.py
 ├── .gitignore
 ├── pyproject.toml
 ├── requirements.txt
@@ -254,7 +276,7 @@ GeometryEngine3D/
 | [01 — Points and Vectors](notebooks/01_points_and_vectors.ipynb) | Points, vectors, and Euclidean geometry |
 | [02 — Lines and Triangles](notebooks/02_lines_and_triangles.ipynb) | Lines, triangles, and geometric calculations |
 | [03 — Planes and Transformations](notebooks/03_planes_and_transformations.ipynb) | Planes and geometric transformations |
-| [04 — Trajectory Planning](notebooks/04_trajectory_planning.ipynb) | Multipoint paths, box and sphere collision detection, obstacle avoidance, Monte Carlo experiments, 3D visualization, and animation |
+| [04 — Trajectory Planning](notebooks/04_trajectory_planning.ipynb) | Multipoint paths, box and sphere collision detection, obstacle avoidance, Monte Carlo experiments, composite obstacle collision visualization, 3D visualization, and animation |
 
 ## 5. Multipoint Trajectory Experiment
 
@@ -376,7 +398,7 @@ The notebook also evaluates the box planner using **1,000 randomly generated axi
 
 ## 10. Automated Testing
 
-The project uses `pytest` to verify geometric operations, path interpolation, solid geometry, segment-box and segment-sphere intersections, contact detection, multipoint collision checks, and box/sphere path planning.
+The project uses `pytest` to verify geometric operations, path interpolation, solid geometry, segment-box, segment-sphere and segment-pyramid intersections, composite obstacle collision detection, contact detection, multipoint collision checks, and box/sphere path planning.
 
 Run from the project root:
 
@@ -384,10 +406,10 @@ Run from the project root:
 python -m pytest -q
 ```
 
-Latest locally verified result (2 November 2026):
+Latest locally verified result (3 November 2026):
 
 ```text
-89 passed in 0.19s
+118 passed in 0.25s
 ```
 
 ## 11. Installation and Usage
@@ -475,12 +497,14 @@ Collision detected: False
 6. Visualize experiments in Jupyter Notebooks.
 7. Analyze results, trade-offs, and limitations.
 
-The experiments investigate whether piecewise linear routes can connect two points without intersecting a rectangular solid or a sphere, and how safety clearance changes the resulting path.
+The experiments investigate whether piecewise linear routes can connect two points without intersecting a rectangular solid or a sphere, and how safety clearance changes the resulting path. A separate experiment detects intersections with a composite obstacle containing a box, sphere, and pyramid.
 
 ## 13. Limitations
 
-- Implemented obstacles are axis-aligned rectangular solids and spheres; each planner supports its own obstacle type.
-- The planner handles one obstacle at a time.
+- Implemented obstacles include axis-aligned rectangular solids, spheres, square pyramids, and composite obstacles.
+- Automatic obstacle avoidance is implemented for a single box or a single sphere.
+- Pyramid3D and CompositeObstacle3D provide collision detection, not automatic path planning.
+- CompositeObstacle3D currently supports `clearance=0` only.
 - Generated routes consist of straight segments.
 - The planner does not guarantee globally optimal routes or completeness.
 - The moving object is treated as a point without physical dimensions.
@@ -491,7 +515,7 @@ The experiments investigate whether piecewise linear routes can connect two poin
 
 GeometryEngine3D demonstrates how three-dimensional geometry can support a practical motion-planning task. In the box example, a direct path of length 10 intersects the obstacle while a planned path of length 16 avoids it. In the sphere example, the selected collision-free candidate has length 16.300 compared with a direct length of 10. Both examples are checked for collisions and visualized in 3D. The Monte Carlo box experiment provides additional empirical validation under a specific randomized setup.
 
-The project connects mathematical definitions with implemented algorithms, automated verification, and reproducible experiments. Its planners are heuristic and their limitations are explicitly documented.
+The project connects mathematical definitions with implemented algorithms, automated verification, and reproducible experiments. It also demonstrates collision detection against a union of three different 3D solids. Its planners are heuristic and their limitations are explicitly documented.
 
 ## 15. References
 
@@ -528,6 +552,7 @@ The project connects mathematical definitions with implemented algorithms, autom
 7. **pytest Development Team.**  
    *pytest Documentation.*  
    https://docs.pytest.org/
+
 
 ## 16. Author
 
